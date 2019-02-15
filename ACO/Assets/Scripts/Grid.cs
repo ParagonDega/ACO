@@ -5,7 +5,7 @@ using UnityEngine;
 public class Grid : MonoBehaviour
 {
     public Transform player;
-    public LayerMask unwalkableMask;
+    public LayerMask unwalkableMask,foodMask;
     public Vector2 gridWorldSize;
     public float nodeRadius;
     Node[,] grid;
@@ -33,7 +33,8 @@ public class Grid : MonoBehaviour
             {
                 Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
                 bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask));                                                                                     //Mostly be used for simulated formicarium
-                grid[x, y] = new Node(walkable, worldPoint,x,y);
+                bool food = !(Physics.CheckSphere(worldPoint, nodeRadius, foodMask));
+                grid[x, y] = new Node(walkable,worldPoint,x,y);
             }
         }
     }
@@ -67,7 +68,10 @@ public class Grid : MonoBehaviour
 
                 if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY)
                 {
-                    neighbours.Add(grid[checkX, checkY]);
+                    if (grid[checkX, checkY].walkable)
+                    {
+                        neighbours.Add(grid[checkX, checkY]);
+                    }
                 }
             }
         }
@@ -91,22 +95,21 @@ public class Grid : MonoBehaviour
     private void OnDrawGizmos()
     {
 
-        Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
-        //if (grid != null)
-        //{
-        //    Node playerNode = NodeFromWorldPoint(player.position);
+        Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 0, gridWorldSize.y));
+        if (grid != null)
+        {
+            Node playerNode = NodeFromWorldPoint(player.position);
 
-        //    foreach (Node n in grid)
-        //    {
-        //        Gizmos.color = (n.walkable) ? Color.white : Color.red;                                                                          //Display unwalkable
-
-        //        if (playerNode == n)
-        //        {
-        //            Gizmos.color = Color.cyan;                                                                                                  //Playernode
-        //        }
-        //        Gizmos.DrawCube(n.worldPos, Vector3.one * (nodeDiameter - .1f));
-        //    }
-        //}
+            foreach (Node n in grid)
+            {
+                Gizmos.color = (n.walkable) ? Color.clear : Color.red;                                                                          //Display unwalkable
+                if (playerNode == n)
+                {
+                    Gizmos.color = Color.cyan;                                                                                                  //Playernode
+                }
+                Gizmos.DrawCube(n.worldPos, Vector3.one * (nodeDiameter - .1f));
+            }
+        }
     }
 
     private int RandomNumber(int num)
