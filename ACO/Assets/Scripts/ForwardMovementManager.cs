@@ -3,13 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MoveRequestManager : MonoBehaviour
+public class ForwardMovementManager : MonoBehaviour
 {
 
     Queue<MoveRequest> moveRequestQueue = new Queue<MoveRequest>();
     MoveRequest currentMoveRequest;
 
-    static MoveRequestManager instance;
+    static ForwardMovementManager instance;
     Pathfinding pathfinding;
 
     bool isProcessingPath;

@@ -6,14 +6,16 @@ using UnityEngine;
 public class Pathfinding : MonoBehaviour
 {
     Grid worldGrid;
-    MoveRequestManager moveRequestManager;
-    PathRequestManager pathRequestManager;
+    ForwardMovementManager forwardMovementManager;
+    BackwardsPathfindingManager pathRequestManager;
+
+    int maskSize = 5;
 
     void Awake()
     {
         worldGrid = GetComponent<Grid>();
-        moveRequestManager = GetComponent<MoveRequestManager>();
-        pathRequestManager = GetComponent<PathRequestManager>();
+        forwardMovementManager = GetComponent<ForwardMovementManager>();
+        pathRequestManager = GetComponent<BackwardsPathfindingManager>();
     }
 
     public void RequestMove(Vector3 currentPos, Vector3 oldPos)
@@ -34,7 +36,7 @@ public class Pathfinding : MonoBehaviour
         //Select neighbour
         targetNode = worldGrid.NextNode(currentNode, lastNode, 1);
         yield return null;
-        moveRequestManager.FinishedProcessingMove(targetNode.worldPos, true);
+        forwardMovementManager.FinishedProcessingMove(targetNode.worldPos, true);
     }
 
     IEnumerator RetracePath(Vector3[] path)
@@ -45,9 +47,9 @@ public class Pathfinding : MonoBehaviour
         {
             newPath.Add(worldGrid.NodeFromWorldPoint(path[i]));
         }
-        //List<Node> returnedPath = DetectLoop(newPath);
-        //Vector3[] returnPath = SimplifyPath(returnedPath);
-        Vector3[] returnPath = SimplifyPath(newPath);
+        List<Node> returnedPath = DetectLoop(newPath);
+        Vector3[] returnPath = SimplifyPath(returnedPath);
+        //Vector3[] returnPath = SimplifyPath(newPath);
 
         Array.Reverse(returnPath);
         pathSucces = true;
@@ -56,31 +58,24 @@ public class Pathfinding : MonoBehaviour
 
     }
 
-    List<Node> DetectLoop(List<Node> path)                                                                  //Recursively detects loops in path and removes them
+    List<Node> DetectLoop(List<Node> path)                  //Recursively detects loops in path and removes them
     {
-        List<Node> updatePath = new List<Node>();
-
-        for (int i = 1; i < path.Count; i++)
-            for (int j = 1; j < path.Count; j++)
+        for(int i = 1; i < path.Count; i++)                 //Starting from the second element, loop through all elements
+        {
+            for (int j = i + 1; j - i <= maskSize && j < path.Count; j++)     //Starting from the element after i, check the next x elements up to the size of mask
             {
-                if (i == j)
+                if(path[i].worldPos == path[j].worldPos)    //if the world location of i is the same as the world location of j then there is a loop
                 {
-                    continue;
-                }
-                if (path[i].worldPos == path[j].worldPos)
-                {
-                    for (int k = 0; k < path.Count; k++)
+                    for(int k = i+1; k <= j && k < path.Count; k++)
                     {
-                        if (k <= i || k > j)
-                        {
-                            updatePath.Add(path[i]);
-                        }
+                        path.RemoveAt(k);                   //Remove all elements after i, up to and including duplicate
                     }
-                    updatePath = DetectLoop(updatePath);      //Recursion
+                    //path.RemoveAll(x => x == null);         //Remove all null elements from path
+                    j = i + 1;                                  //Reset j to continue checking for loops
                 }
             }
-        return updatePath;
-
+        }
+        return path;
     }
 
     Vector3[] SimplifyPath(List<Node> path)                                                                 //Converts node list to vec3 array

@@ -5,12 +5,13 @@ using UnityEngine;
 public class Unit : MonoBehaviour
 {
     List<Vector3> traveledNodes = new List<Vector3>();
-    float speed = 5.0f;
+    float speed = 10.0f;
     Vector3 test = Vector3.zero, targetPos, checkPosition, currentWaypoint;
     Vector3[] path;
     const float minPathUpdateTime = .2f;
     bool returnToNest = false, moving = false;
-    int targetIndex, energy = 30, storage=0;
+    int targetIndex, storage=0;
+    public int energy;
 
     private void Start()
     {
@@ -35,7 +36,7 @@ public class Unit : MonoBehaviour
         if (!moving)
         {
             traveledNodes.Add(transform.position);
-            MoveRequestManager.RequestMove(transform.position, targetPos, OnReturn);
+            ForwardMovementManager.RequestMove(transform.position, targetPos, OnReturn);
         }
         while (true)
         {
@@ -43,7 +44,7 @@ public class Unit : MonoBehaviour
             if (!moving)
             {
                 traveledNodes.Add(transform.position);
-                MoveRequestManager.RequestMove(transform.position, targetPos, OnReturn);
+                ForwardMovementManager.RequestMove(transform.position, targetPos, OnReturn);
             }
         }
     }
@@ -95,7 +96,7 @@ public class Unit : MonoBehaviour
 
             if (dist <= 0.4f)
             {
-                Debug.Log("Target Reached");
+                //Debug.Log("Target Reached");
 
                 targetIndex++;
                 if (targetIndex >= path.Length)
@@ -115,9 +116,9 @@ public class Unit : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if(collision.collider.name == "Ant")
+        if (collision.collider.name == "Ant")
         {
-            Debug.Log(collision.collider.name);
+            //Debug.Log(collision.collider.name);
             if (!returnToNest)
             {
                 moving = false;
@@ -140,7 +141,7 @@ public class Unit : MonoBehaviour
         targetIndex = 0;
         targetPos = test;
         returnToNest = true;
-        PathRequestManager.RequestPath(traveledNodes.ToArray(), OnPathFound);
+        BackwardsPathfindingManager.RequestPath(traveledNodes.ToArray(), OnPathFound);
     }
 
     public void OnDrawGizmos()

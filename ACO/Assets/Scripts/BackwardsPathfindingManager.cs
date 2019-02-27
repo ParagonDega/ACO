@@ -3,12 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PathRequestManager : MonoBehaviour
+public class BackwardsPathfindingManager : MonoBehaviour //Backwards pathfinding
 {
 
     Queue<PathRequest> pathRequestQueue = new Queue<PathRequest>();
     PathRequest currentPathRequest;
-    static PathRequestManager instance;
+    static BackwardsPathfindingManager instance;
     Pathfinding pathfinding;
     bool isProcessingPath;
 
