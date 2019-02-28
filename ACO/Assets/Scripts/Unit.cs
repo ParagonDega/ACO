@@ -4,19 +4,23 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
+    public Nest home;
+    public Grid grid;
     List<Vector3> traveledNodes = new List<Vector3>();
     float speed = 10.0f;
-    Vector3 test = Vector3.zero, targetPos, checkPosition, currentWaypoint;
+    Vector3 test = Vector3.zero, targetPos, checkPosition, currentWaypoint, homeNest;
     Vector3[] path;
     const float minPathUpdateTime = .2f;
-    bool returnToNest = false, moving = false;
+    bool returnToNest = false, moving = false, foundResource = false;
     int targetIndex, storage=0;
     public int energy;
+    int baseEnergy;
 
     private void Start()
     {
         targetPos = transform.position;
         StartCoroutine(UpdateMove());
+        baseEnergy = GetEnergy();
     }
 
     private void Update()
@@ -27,7 +31,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-    IEnumerator UpdateMove()
+    IEnumerator UpdateMove()                                        //Forward pathfinding manager call
     {
         if (Time.timeSinceLevelLoad < .3f)
         {
@@ -49,7 +53,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public void OnReturn(Vector3 moveLocation, bool moveSuccesful)
+    public void OnReturn(Vector3 moveLocation, bool moveSuccesful)  //Forward pathfinding wrapper
     {
         if (moveSuccesful && !returnToNest && !moving)
         {
@@ -60,7 +64,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-    IEnumerator UnitSearch()
+    IEnumerator UnitSearch()                                        //Forward pathfinding coroutine
     {
         while (true)
         {
@@ -69,13 +73,31 @@ public class Unit : MonoBehaviour
             {
                 moving = false;
             }
+            float nestDist = Vector3.Distance(transform.position, homeNest);
+            if (nestDist <= 1.0f)
+            {
+                traveledNodes.Clear();
+                energy = baseEnergy;
+                traveledNodes.Add(homeNest);
+            }
+
             transform.position = Vector3.MoveTowards(transform.position, targetPos, speed * Time.deltaTime);
             yield return null;
         }
-
+  
     }
 
-    public void OnPathFound(Vector3[] newPath, bool moveSuccesful)
+    private void ReturnToNest()                                     //Backwards pathfinding manager call
+    {
+        StopCoroutine("UnitSearch");
+        moving = false;
+        targetIndex = 0;
+        targetPos = test;
+        returnToNest = true;
+        BackwardsPathfindingManager.RequestPath(traveledNodes.ToArray(), OnPathFound);
+    }
+
+    public void OnPathFound(Vector3[] newPath, bool moveSuccesful)  //Backwards pathfinding wrapper
     {
 
         if (moveSuccesful && returnToNest && !moving)
@@ -88,7 +110,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-    IEnumerator FollowPath()
+    IEnumerator FollowPath()                                        //Bacwards pathfinding coroutine
     {
         while (true)
         {
@@ -98,10 +120,19 @@ public class Unit : MonoBehaviour
             {
                 //Debug.Log("Target Reached");
 
+                if (foundResource)
+                {
+                    grid.updateNodeWeight(currentWaypoint);
+                }
+
                 targetIndex++;
                 if (targetIndex >= path.Length)
                 {
                     traveledNodes.Clear();
+                    if (foundResource)
+                    {
+                        foundResource = false;
+                    }
                     returnToNest = false;
                     moving = false;
                     yield break;
@@ -112,6 +143,11 @@ public class Unit : MonoBehaviour
             transform.position = Vector3.MoveTowards(transform.position, currentWaypoint, speed * Time.deltaTime);
             yield return null;
         }
+    }
+
+    private int GetEnergy()
+    {
+        return energy;
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -128,21 +164,14 @@ public class Unit : MonoBehaviour
 
         if (collision.collider.name == "Honey" && !returnToNest)
         {
+            grid.updateNodeWeight(transform.position);
             Debug.Log(collision.collider.name);
+            foundResource = true;
             storage++;
             ReturnToNest();
         }
     }
 
-    private void ReturnToNest()
-    {
-        StopCoroutine("UnitSearch");
-        moving = false;
-        targetIndex = 0;
-        targetPos = test;
-        returnToNest = true;
-        BackwardsPathfindingManager.RequestPath(traveledNodes.ToArray(), OnPathFound);
-    }
 
     public void OnDrawGizmos()
     {

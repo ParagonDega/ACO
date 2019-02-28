@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -42,17 +43,50 @@ public class Grid : MonoBehaviour
     public Node NextNode(Node n, Node l, int size)
     {
         Node nextNode = l;
-        List<Node> neighbours = GetNeighbours(n);
-        while (nextNode == l)
+        List<Node> neighbours = GetNeighbours(n,l);
+        if (neighbours.Count > 1)
         {
-            nextNode = neighbours[RandomNumber(neighbours.Count)];
+            //while (nextNode == l)                                         //Ensures next node is not the last node traveled from
+            //{
+                //nextNode = neighbours[RandomNumber(neighbours.Count)];
+                nextNode = CalculateProbabilities(neighbours);//Change for graph weights
+            //}
         }
-
+        else
+        {
+            nextNode = l;                                                   //If node is a dead end go back
+        }
         return nextNode;
-
     }
 
-    public List<Node> GetNeighbours(Node node)
+    private Node CalculateProbabilities(List<Node> l)
+    {
+        Node next = l[0];
+        float pheremone = 0.0f;
+        float check = 0, random = RandomNumber(1.0f);
+
+        for (int i = 0; i < l.Count; i++)                                   //calculate neighbour probabilities
+        {
+            pheremone += l[i].alpha * (1 / l[i].pheremone);                 //Sets total pheremone
+        }
+
+        for (int i = 0; i < l.Count; i++)                                   //calculate neighbour probabilities
+        {
+            l[i].probability = (l[i].alpha * (1 / l[i].pheremone))/pheremone;
+        }
+            for (int i = 0; i < l.Count; i++)
+            {
+                check += l[i].probability;
+                if (check >= random)
+                {
+                    next = l[i];
+                    break;
+                }
+            }
+        return next ;
+    }
+
+    public List<Node> GetNeighbours(Node node, Node last)
     {
         List<Node> neighbours = new List<Node>();
 
@@ -68,7 +102,7 @@ public class Grid : MonoBehaviour
 
                 if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY)
                 {
-                    if (grid[checkX, checkY].walkable)
+                    if (grid[checkX, checkY].walkable && (checkX != last.worldPos.x && checkY != last.worldPos.z))  //If position is walkable and not the last node
                     {
                         neighbours.Add(grid[checkX, checkY]);
                     }
@@ -77,6 +111,11 @@ public class Grid : MonoBehaviour
         }
 
         return neighbours;
+    }
+
+    public void updateNodeWeight(Vector3 position)
+    {
+        NodeFromWorldPoint(position).changeWeight(-1.0f);
     }
 
     public Node NodeFromWorldPoint(Vector3 worldPosition)
@@ -94,27 +133,32 @@ public class Grid : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-
+        float color;
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 0, gridWorldSize.y));
         if (grid != null)
         {
-            Node playerNode = NodeFromWorldPoint(player.position);
+            //Node playerNode = NodeFromWorldPoint(player.position);
 
             foreach (Node n in grid)
             {
                 Gizmos.color = (n.walkable) ? Color.clear : Color.red;                                                                          //Display unwalkable
-                if (playerNode == n)
+                if(n.pheremone < n.GetInitialPheremone())
                 {
-                    Gizmos.color = Color.cyan;                                                                                                  //Playernode
+                    color = n.pheremone / n.GetInitialPheremone();
+                    Gizmos.color = new Vector4(color, color, color, 1.0f);
                 }
-                Gizmos.DrawCube(n.worldPos, Vector3.one * (nodeDiameter - .1f));
+                //if (playerNode == n)
+                //{
+                //    Gizmos.color = Color.cyan;                                                                                                  //Playernode
+                //}
+                Gizmos.DrawCube(n.worldPos, new Vector3(1.0f,0.2f,1.0f) * (nodeDiameter - .1f));
             }
         }
     }
 
-    private int RandomNumber(int num)
+    private float RandomNumber(float num)
     {
-        int value = (int)(Random.Range(0.0f, (float)num));
+        float value = (UnityEngine.Random.Range(0.0f, (float)num));
         return value;
     }
 }

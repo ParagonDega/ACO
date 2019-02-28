@@ -49,7 +49,6 @@ public class Pathfinding : MonoBehaviour
         }
         List<Node> returnedPath = DetectLoop(newPath);
         Vector3[] returnPath = SimplifyPath(returnedPath);
-        //Vector3[] returnPath = SimplifyPath(newPath);
 
         Array.Reverse(returnPath);
         pathSucces = true;
@@ -58,7 +57,7 @@ public class Pathfinding : MonoBehaviour
 
     }
 
-    List<Node> DetectLoop(List<Node> path)                  //Recursively detects loops in path and removes them
+    List<Node> DetectLoop(List<Node> path)                  //detects loops in path and removes them
     {
         for(int i = 1; i < path.Count; i++)                 //Starting from the second element, loop through all elements
         {
@@ -78,7 +77,7 @@ public class Pathfinding : MonoBehaviour
         return path;
     }
 
-    Vector3[] SimplifyPath(List<Node> path)                                                                 //Converts node list to vec3 array
+    Vector3[] SimplifyPath(List<Node> path)                 //Converts node list to vec3 array
     {
         List<Vector3> waypoints = new List<Vector3>();
 
