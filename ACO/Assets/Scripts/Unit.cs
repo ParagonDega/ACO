@@ -7,7 +7,7 @@ public class Unit : MonoBehaviour
     public Nest home;
     public Grid grid;
     List<Vector3> traveledNodes = new List<Vector3>();
-    float speed = 10.0f;
+    float speed = 2.0f;
     Vector3 test = Vector3.zero, targetPos, checkPosition, currentWaypoint, homeNest;
     Vector3[] path;
     const float minPathUpdateTime = .2f;
@@ -37,11 +37,11 @@ public class Unit : MonoBehaviour
         {
             yield return new WaitForSeconds(.3f);
         }
-        if (!moving)
-        {
-            traveledNodes.Add(transform.position);
-            ForwardMovementManager.RequestMove(transform.position, targetPos, OnReturn);
-        }
+        //if (!moving)
+        //{
+        //    traveledNodes.Add(transform.position);
+        //    ForwardMovementManager.RequestMove(transform.position, targetPos, OnReturn);
+        //}
         while (true)
         {
             yield return new WaitForSeconds(minPathUpdateTime);
@@ -162,7 +162,7 @@ public class Unit : MonoBehaviour
 
         }
 
-        if (collision.collider.name == "Honey" && !returnToNest)
+        if (collision.collider.name == "foodHoney(Clone)" && !returnToNest)
         {
             grid.updateNodeWeight(transform.position);
             Debug.Log(collision.collider.name);
@@ -177,14 +177,21 @@ public class Unit : MonoBehaviour
     {
         if (targetPos != test)
         {
-            Gizmos.color = Color.black;
+            Gizmos.color = new Vector4(Color.cyan.r, Color.cyan.g, Color.cyan.b, 0.4f);
             Gizmos.DrawCube(targetPos, Vector3.one);
         }
         if (path != null)
         {
-            for (int i = targetIndex; i < path.Length; i++)
+            if (foundResource)
             {
-                Gizmos.color = Color.black;
+                Gizmos.color = new Vector4(Color.red.r, Color.red.g, Color.red.b, 0.4f);//Colour successful food trail
+            }
+            else
+            {
+                Gizmos.color = new Vector4(Color.green.r, Color.green.g, Color.green.b, 0.4f);//Colour failed search trail
+            }
+            for (int i = targetIndex; i < path.Length; i++)
+            {                
                 Gizmos.DrawCube(path[i], Vector3.one);
 
                 if (i == targetIndex)

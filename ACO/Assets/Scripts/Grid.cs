@@ -5,8 +5,11 @@ using UnityEngine;
 
 public class Grid : MonoBehaviour
 {
+    const float minGridUpdateTime = 120.0f;
+    public Nest homeNest;
+    public Camera gamecamera;
     public Transform player;
-    public LayerMask unwalkableMask,foodMask;
+    public LayerMask unwalkableMask, foodMask;
     public Vector2 gridWorldSize;
     public float nodeRadius;
     Node[,] grid;
@@ -14,13 +17,16 @@ public class Grid : MonoBehaviour
     float nodeDiameter;
     int gridSizeX, gridSizeY;
 
+    private float offset = 1.2f;
+
+
     private void Awake()
     {
         nodeDiameter = nodeRadius * 2;
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
         gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
         CreateGrid();
-
+        StartCoroutine(UpdateGrid());
     }
 
     void CreateGrid()
@@ -28,34 +34,32 @@ public class Grid : MonoBehaviour
         grid = new Node[gridSizeX, gridSizeY];
         Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridSizeY / 2;
 
-        for(int x = 0; x < gridSizeX; x++)
+        for (int x = 0; x < gridSizeX; x++)
         {
             for (int y = 0; y < gridSizeY; y++)
             {
                 Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
                 bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask));                                                                                     //Mostly be used for simulated formicarium
                 bool food = !(Physics.CheckSphere(worldPoint, nodeRadius, foodMask));
-                grid[x, y] = new Node(walkable,worldPoint,x,y);
+                grid[x, y] = new Node(walkable, worldPoint, x, y);
             }
+        }
+        Node homeNode = NodeFromWorldPoint(homeNest.GetPosition());
+        homeNode.pheremone = homeNode.GetNestPheremone();
+        List<Node> neighbours = GetNeighbours(homeNode);
+        for (int i = 0; i < neighbours.Count; i++)
+        {
+            neighbours[i].pheremone = homeNode.pheremone;                                                             //Set all nest node pheremones low to simulate nest awareness
         }
     }
 
     public Node NextNode(Node n, Node l, int size)
     {
-        Node nextNode = l;
-        List<Node> neighbours = GetNeighbours(n,l);
-        if (neighbours.Count > 1)
-        {
-            //while (nextNode == l)                                         //Ensures next node is not the last node traveled from
-            //{
-                //nextNode = neighbours[RandomNumber(neighbours.Count)];
-                nextNode = CalculateProbabilities(neighbours);//Change for graph weights
-            //}
-        }
-        else
-        {
-            nextNode = l;                                                   //If node is a dead end go back
-        }
+        Node nextNode;
+        List<Node> neighbours = GetNeighbours(n, l);
+
+        nextNode = CalculateProbabilities(neighbours);//Change for graph weights
+
         return nextNode;
     }
 
@@ -72,21 +76,21 @@ public class Grid : MonoBehaviour
 
         for (int i = 0; i < l.Count; i++)                                   //calculate neighbour probabilities
         {
-            l[i].probability = (l[i].alpha * (1 / l[i].pheremone))/pheremone;
+            l[i].probability = (l[i].alpha * (1 / l[i].pheremone)) / pheremone;
         }
-            for (int i = 0; i < l.Count; i++)
+        for (int i = 0; i < l.Count; i++)
+        {
+            check += l[i].probability;
+            if (check >= random)
             {
-                check += l[i].probability;
-                if (check >= random)
-                {
-                    next = l[i];
-                    break;
-                }
+                next = l[i];
+                break;
             }
-        return next ;
+        }
+        return next;
     }
 
-    public List<Node> GetNeighbours(Node node, Node last)
+    public List<Node> GetNeighbours(Node node, Node last)//For forward pathfinding
     {
         List<Node> neighbours = new List<Node>();
 
@@ -103,6 +107,32 @@ public class Grid : MonoBehaviour
                 if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY)
                 {
                     if (grid[checkX, checkY].walkable && (checkX != last.worldPos.x && checkY != last.worldPos.z))  //If position is walkable and not the last node
+                    {
+                        neighbours.Add(grid[checkX, checkY]);
+                    }
+                }
+            }
+        }
+
+        return neighbours;
+    }
+    public List<Node> GetNeighbours(Node node)//For pheremone update
+    {
+        List<Node> neighbours = new List<Node>();
+
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int y = -1; y <= 1; y++)
+            {
+                if (x == 0 && y == 0)
+                    continue;
+
+                int checkX = node.gridX + x;
+                int checkY = node.gridY + y;
+
+                if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY)
+                {
+                    if (grid[checkX, checkY].walkable)  //If position is walkable and not the last node
                     {
                         neighbours.Add(grid[checkX, checkY]);
                     }
@@ -142,16 +172,21 @@ public class Grid : MonoBehaviour
             foreach (Node n in grid)
             {
                 Gizmos.color = (n.walkable) ? Color.clear : Color.red;                                                                          //Display unwalkable
-                if(n.pheremone < n.GetInitialPheremone())
+                if (n.pheremone < n.GetInitialPheremone() && n.pheremone >= 1.0f)
                 {
                     color = n.pheremone / n.GetInitialPheremone();
                     Gizmos.color = new Vector4(color, color, color, 1.0f);
+                }else if(n.pheremone == 0.0f){
+                    Gizmos.color = new Vector4(Color.black.r, Color.black.g, Color.black.b, 0.2f);
+                }
+                else if(n.pheremone == 0.9f){
+                    Gizmos.color = new Vector4(Color.yellow.r, Color.yellow.g, Color.yellow.b, 0.2f);
                 }
                 //if (playerNode == n)
                 //{
                 //    Gizmos.color = Color.cyan;                                                                                                  //Playernode
                 //}
-                Gizmos.DrawCube(n.worldPos, new Vector3(1.0f,0.2f,1.0f) * (nodeDiameter - .1f));
+                Gizmos.DrawCube(n.worldPos, new Vector3(1.0f, 0.2f, 1.0f) * (nodeDiameter - .1f));
             }
         }
     }
@@ -160,5 +195,68 @@ public class Grid : MonoBehaviour
     {
         float value = (UnityEngine.Random.Range(0.0f, (float)num));
         return value;
+    }
+
+    void OnMouseDown()
+    {
+        Ray ray = gamecamera.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hitInfo;
+        Node spawnNode = null;
+        Vector3 spawnPosition = Vector3.zero;
+
+        if (Physics.Raycast(ray, out hitInfo))
+        {
+            spawnNode = NodeFromWorldPoint(hitInfo.point);//get spawn location
+            spawnPosition = spawnNode.worldPos;
+            Debug.Log("Hit " + spawnNode.gridX + " " + spawnNode.gridY);
+
+        }
+        if (spawnNode.food != null)//Check if food already spawned
+        {
+            Debug.Log("Already food here - TODO: Display on screen");
+            return;
+        }
+        else//Spawn new food item
+        {
+            if (spawnPosition != Vector3.zero)
+            {
+                GameObject foodToSpawn = SpawnManager.spawnManager.GetFoodToSpawn();
+                spawnNode.food = (GameObject)Instantiate(foodToSpawn, spawnPosition, Quaternion.identity);
+                List<Node> neighbours = GetNeighbours(spawnNode);
+                float foodPhere=spawnNode.GetFoodPheremone();
+                for (int i = 0; i < neighbours.Count; i++)
+                {
+                    neighbours[i].pheremone = foodPhere;                                                             //Set all neighbour pheremones high to simulate food awareness
+                }
+
+            }
+        }
+
+    }
+
+    IEnumerator UpdateGrid()
+    {
+        if (Time.timeSinceLevelLoad < 120.0f)
+        {
+            yield return new WaitForSeconds(30.0f);
+        }
+        while (true)
+        {
+            yield return new WaitForSeconds(minGridUpdateTime);
+            Debug.Log("Updated grid");
+            pheremoneDispersal();
+        }
+
+    }
+
+    void pheremoneDispersal()
+    {
+        Debug.Log("Updated pheremone");
+        foreach(Node n in grid)
+        {
+            if(n.pheremone != n.GetInitialPheremone() && n.pheremone != n.GetFoodPheremone() && n.pheremone != n.GetNestPheremone()){
+                n.changeWeight(0.25f);
+            }
+        }
     }
 }

@@ -26,7 +26,7 @@ public class Nest : MonoBehaviour
         }
     }
 
-    Vector3 GetPosition()
+    public Vector3 GetPosition()
     {
         return transform.position;
     }
