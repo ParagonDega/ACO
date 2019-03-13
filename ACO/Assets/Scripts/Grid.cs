@@ -2,11 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public class Grid : MonoBehaviour
 {
     const float minGridUpdateTime = 120.0f;
-    public Nest homeNest;
     public Camera gamecamera;
     public Transform player;
     public LayerMask unwalkableMask, foodMask;
@@ -17,8 +17,11 @@ public class Grid : MonoBehaviour
     float nodeDiameter;
     int gridSizeX, gridSizeY;
 
+    float randomLimit= 1.0f;
     private float offset = 1.2f;
-
+    string path, content;
+    bool textStart = false;
+    int run = 0;
 
     private void Awake()
     {
@@ -27,6 +30,14 @@ public class Grid : MonoBehaviour
         gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
         CreateGrid();
         StartCoroutine(UpdateGrid());
+
+        path = Application.dataPath + "/log.txt";
+
+        if (!File.Exists(path))
+        {
+            File.WriteAllText(path, "");
+        }
+
     }
 
     void CreateGrid()
@@ -44,19 +55,19 @@ public class Grid : MonoBehaviour
                 grid[x, y] = new Node(walkable, worldPoint, x, y);
             }
         }
-        Node homeNode = NodeFromWorldPoint(homeNest.GetPosition());
-        homeNode.pheremone = homeNode.GetNestPheremone();
-        List<Node> neighbours = GetNeighbours(homeNode);
-        for (int i = 0; i < neighbours.Count; i++)
-        {
-            neighbours[i].pheremone = homeNode.pheremone;                                                             //Set all nest node pheremones low to simulate nest awareness
-        }
     }
 
     public Node NextNode(Node n, Node l, int size)
     {
         Node nextNode;
         List<Node> neighbours = GetNeighbours(n, l);
+
+        if (!textStart)
+        {
+            content = "Settings: pheremoneInit: " + n.GetInitialPheremone() + ", foodInit:" + n.GetFoodPheremone() + ", alpha:" + n.alpha + ", randomLimit:" + randomLimit + "\n";
+            File.AppendAllText(path, content);
+            textStart = true;
+        }
 
         nextNode = CalculateProbabilities(neighbours);//Change for graph weights
 
@@ -65,24 +76,31 @@ public class Grid : MonoBehaviour
 
     private Node CalculateProbabilities(List<Node> l)
     {
+        content = "Run: " + run + "= ";
         Node next = l[0];
         float pheremone = 0.0f;
-        float check = 0, random = RandomNumber(1.0f);
+        float check = 0, random = RandomNumber(randomLimit);
 
         for (int i = 0; i < l.Count; i++)                                   //calculate neighbour probabilities
         {
             pheremone += l[i].alpha * (1 / l[i].pheremone);                 //Sets total pheremone
         }
 
+        content += random + ", " + pheremone + ", ";
+
         for (int i = 0; i < l.Count; i++)                                   //calculate neighbour probabilities
         {
             l[i].probability = (l[i].alpha * (1 / l[i].pheremone)) / pheremone;
+            content += i + ": " + l[i].probability + ", ";
         }
         for (int i = 0; i < l.Count; i++)
         {
             check += l[i].probability;
             if (check >= random)
             {
+                content += "Next: " + i + "\n";
+                File.AppendAllText(path, content);
+                run++;
                 next = l[i];
                 break;
             }
@@ -222,16 +240,27 @@ public class Grid : MonoBehaviour
             {
                 GameObject foodToSpawn = SpawnManager.spawnManager.GetFoodToSpawn();
                 spawnNode.food = (GameObject)Instantiate(foodToSpawn, spawnPosition, Quaternion.identity);
-                List<Node> neighbours = GetNeighbours(spawnNode);
-                float foodPhere=spawnNode.GetFoodPheremone();
-                for (int i = 0; i < neighbours.Count; i++)
-                {
-                    neighbours[i].pheremone = foodPhere;                                                             //Set all neighbour pheremones high to simulate food awareness
-                }
+                //List<Node> neighbours = GetNeighbours(spawnNode);
+                //float foodPhere=spawnNode.GetFoodPheremone();
+                //for (int i = 0; i < neighbours.Count; i++)
+                //{
+                //    neighbours[i].pheremone = foodPhere;                                                             //Set all neighbour pheremones high to simulate food awareness
+                //}
 
             }
         }
 
+    }
+
+    public void RemoveFood(Vector3 position)
+    {
+        Node spawnNode = NodeFromWorldPoint(position);
+        List<Node> neighbours = GetNeighbours(spawnNode);
+        float initPhere = spawnNode.GetInitialPheremone();
+        for (int i = 0; i < neighbours.Count; i++)
+        {
+            neighbours[i].pheremone = initPhere;                                                             //Set all neighbour pheremones high to simulate food awareness
+        }
     }
 
     IEnumerator UpdateGrid()
@@ -254,7 +283,7 @@ public class Grid : MonoBehaviour
         Debug.Log("Updated pheremone");
         foreach(Node n in grid)
         {
-            if(n.pheremone != n.GetInitialPheremone() && n.pheremone != n.GetFoodPheremone() && n.pheremone != n.GetNestPheremone()){
+            if(n.pheremone != n.GetInitialPheremone() && n.pheremone != n.GetFoodPheremone()){
                 n.changeWeight(0.25f);
             }
         }

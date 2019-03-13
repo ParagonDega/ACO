@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ public class Unit : MonoBehaviour
     bool returnToNest = false, moving = false, foundResource = false;
     int targetIndex, storage=0;
     public int energy;
-    int baseEnergy;
+    int baseEnergy, storageLimit=50;
 
     private void Start()
     {
@@ -47,6 +48,7 @@ public class Unit : MonoBehaviour
             yield return new WaitForSeconds(minPathUpdateTime);
             if (!moving)
             {
+                energy--;
                 traveledNodes.Add(transform.position);
                 ForwardMovementManager.RequestMove(transform.position, targetPos, OnReturn);
             }
@@ -77,7 +79,7 @@ public class Unit : MonoBehaviour
             if (nestDist <= 1.0f)
             {
                 traveledNodes.Clear();
-                energy = baseEnergy;
+                FillEnergy();
                 traveledNodes.Add(homeNest);
             }
 
@@ -132,7 +134,9 @@ public class Unit : MonoBehaviour
                     if (foundResource)
                     {
                         foundResource = false;
+                        home.ChangeFood(storage);
                     }
+                    FillEnergy();
                     returnToNest = false;
                     moving = false;
                     yield break;
@@ -143,6 +147,13 @@ public class Unit : MonoBehaviour
             transform.position = Vector3.MoveTowards(transform.position, currentWaypoint, speed * Time.deltaTime);
             yield return null;
         }
+    }
+
+    private void FillEnergy()
+    {
+        int missing = (baseEnergy - energy) % 10;
+        home.ChangeFood(-missing);
+        energy = baseEnergy;
     }
 
     private int GetEnergy()
@@ -164,14 +175,30 @@ public class Unit : MonoBehaviour
 
         if (collision.collider.name == "foodHoney(Clone)" && !returnToNest)
         {
+            GameObject hitObject = collision.gameObject;
+
+
             grid.updateNodeWeight(transform.position);
             Debug.Log(collision.collider.name);
             foundResource = true;
-            storage++;
+            int fill = ((baseEnergy - energy) % 10);
+            float gathered = collision.gameObject.GetComponent<ResourceManager>().ResourceGather(-(fill + storageLimit));
+            energy = baseEnergy;
+            storage = ((int)gathered-fill);
+
             ReturnToNest();
         }
     }
 
+    public void OnTriggerEnter(Collider other)
+    {
+        GameObject hitObject = other.gameObject;
+        if(hitObject.tag == "Resource")
+        {
+            int fill = -(((baseEnergy - energy) % 10) + storage);
+            hitObject.GetComponent<ResourceManager>().ResourceGather(fill);
+        }
+    }
 
     public void OnDrawGizmos()
     {

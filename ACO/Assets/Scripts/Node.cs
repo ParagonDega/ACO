@@ -7,7 +7,7 @@ public class Node
     public bool walkable;
     public Vector3 worldPos;
     public int gridX, gridY;
-    public const float pheremoneInit = 8.0f, nestInit = 0.0f, foodInit = 0.9f;
+    public const float pheremoneInit = 8.0f, foodInit = 0.9f;
     public float alpha = 10.0f, pheremone, probability;
 
     public GameObject food;
@@ -21,7 +21,6 @@ public class Node
         pheremone = pheremoneInit;
     }
     public float GetInitialPheremone(){return pheremoneInit;}
-    public float GetNestPheremone() { return nestInit; }
     public float GetFoodPheremone() { return foodInit; }
 
 
