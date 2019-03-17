@@ -106,4 +106,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   resourceTypes: 0
   grid: {fileID: 0}
-  availableResource: 100
+  availableResource: 400

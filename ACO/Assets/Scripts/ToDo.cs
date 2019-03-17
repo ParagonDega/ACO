@@ -18,7 +18,7 @@ public class ToDo
      * 8-Split energy with protein
      */
      /*
-      * Ants still clumping together
+      * *Fixed*Ants still clumping together - ignoring collision layer
       * Pathfinding weights need balancing
       */
 }

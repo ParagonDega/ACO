@@ -13,12 +13,13 @@ public class Grid : MonoBehaviour
     public Vector2 gridWorldSize;
     public float nodeRadius;
     Node[,] grid;
+    public Nest nest;
 
     float nodeDiameter;
     int gridSizeX, gridSizeY;
 
     float randomLimit= 1.0f;
-    private float offset = 1.2f;
+    //private float offset = 1.2f;
     string path, content;
     bool textStart = false;
     int run = 0;
@@ -62,12 +63,12 @@ public class Grid : MonoBehaviour
         Node nextNode;
         List<Node> neighbours = GetNeighbours(n, l);
 
-        if (!textStart)
-        {
-            content = "Settings: pheremoneInit: " + n.GetInitialPheremone() + ", foodInit:" + n.GetFoodPheremone() + ", alpha:" + n.alpha + ", randomLimit:" + randomLimit + "\n";
-            File.AppendAllText(path, content);
-            textStart = true;
-        }
+        //if (!textStart)
+        //{
+        //    content = "Settings: pheremoneInit: " + n.GetInitialPheremone() + ", foodInit:" + n.GetFoodPheremone() + ", alpha:" + n.alpha + ", randomLimit:" + randomLimit + "\n";
+        //    File.AppendAllText(path, content);
+        //    textStart = true;
+        //}
 
         nextNode = CalculateProbabilities(neighbours);//Change for graph weights
 
@@ -76,7 +77,7 @@ public class Grid : MonoBehaviour
 
     private Node CalculateProbabilities(List<Node> l)
     {
-        content = "Run: " + run + "= ";
+        //content = "Run: " + run + "= ";
         Node next = l[0];
         float pheremone = 0.0f;
         float check = 0, random = RandomNumber(randomLimit);
@@ -86,20 +87,20 @@ public class Grid : MonoBehaviour
             pheremone += l[i].alpha * (1 / l[i].pheremone);                 //Sets total pheremone
         }
 
-        content += random + ", " + pheremone + ", ";
+        //content += random + ", " + pheremone + ", ";
 
         for (int i = 0; i < l.Count; i++)                                   //calculate neighbour probabilities
         {
             l[i].probability = (l[i].alpha * (1 / l[i].pheremone)) / pheremone;
-            content += i + ": " + l[i].probability + ", ";
+            //content += i + ": " + l[i].probability + ", ";
         }
         for (int i = 0; i < l.Count; i++)
         {
             check += l[i].probability;
             if (check >= random)
             {
-                content += "Next: " + i + "\n";
-                File.AppendAllText(path, content);
+                //content += "Next: " + i + "\n";
+                //File.AppendAllText(path, content);
                 run++;
                 next = l[i];
                 break;
@@ -239,8 +240,11 @@ public class Grid : MonoBehaviour
             if (spawnPosition != Vector3.zero)
             {
                 GameObject foodToSpawn = SpawnManager.spawnManager.GetFoodToSpawn();
-                spawnNode.food = (GameObject)Instantiate(foodToSpawn, spawnPosition, Quaternion.identity);
-                //List<Node> neighbours = GetNeighbours(spawnNode);
+                float dist = Vector3.Distance(spawnPosition, nest.GetPosition());
+                if (dist > 4.0f) {
+                    spawnNode.food = (GameObject)Instantiate(foodToSpawn, spawnPosition, Quaternion.identity);
+                }
+                    //List<Node> neighbours = GetNeighbours(spawnNode);
                 //float foodPhere=spawnNode.GetFoodPheremone();
                 //for (int i = 0; i < neighbours.Count; i++)
                 //{
@@ -272,7 +276,6 @@ public class Grid : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(minGridUpdateTime);
-            Debug.Log("Updated grid");
             pheremoneDispersal();
         }
 

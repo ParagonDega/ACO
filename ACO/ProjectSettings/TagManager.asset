@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - target
+  - Resource
   layers:
   - Default
   - TransparentFX
@@ -19,7 +20,7 @@ TagManager:
   - Food
   - Pheremone
   - Ground
-  - 
+  - Agent
   - 
   - 
   - 

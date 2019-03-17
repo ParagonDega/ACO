@@ -7,9 +7,10 @@ public class Unit : MonoBehaviour
 {
     public Nest home;
     public Grid grid;
+    private BoxCollider agentCollider;
     List<Vector3> traveledNodes = new List<Vector3>();
     float speed = 2.0f;
-    Vector3 test = Vector3.zero, targetPos, checkPosition, currentWaypoint, homeNest;
+    Vector3 test = Vector3.zero, targetPos, checkPosition, currentWaypoint,homeNest;
     Vector3[] path;
     const float minPathUpdateTime = .2f;
     bool returnToNest = false, moving = false, foundResource = false;
@@ -19,16 +20,22 @@ public class Unit : MonoBehaviour
 
     private void Start()
     {
+        agentCollider = GetComponent<BoxCollider>();
         targetPos = transform.position;
         StartCoroutine(UpdateMove());
         baseEnergy = GetEnergy();
+        homeNest = home.GetPosition();
+        Physics.IgnoreLayerCollision(13, 13);
     }
 
     private void Update()
     {
-        if(traveledNodes.Count >= energy && !returnToNest)
+        if(traveledNodes.Count >= (baseEnergy/2) && !returnToNest)
         {
             ReturnToNest();
+        }else if (energy <= 2 && !returnToNest)
+        {
+            KillUnit();
         }
     }
 
@@ -38,11 +45,6 @@ public class Unit : MonoBehaviour
         {
             yield return new WaitForSeconds(.3f);
         }
-        //if (!moving)
-        //{
-        //    traveledNodes.Add(transform.position);
-        //    ForwardMovementManager.RequestMove(transform.position, targetPos, OnReturn);
-        //}
         while (true)
         {
             yield return new WaitForSeconds(minPathUpdateTime);
@@ -79,7 +81,7 @@ public class Unit : MonoBehaviour
             if (nestDist <= 1.0f)
             {
                 traveledNodes.Clear();
-                FillEnergy();
+                CheckFood();
                 traveledNodes.Add(homeNest);
             }
 
@@ -120,8 +122,6 @@ public class Unit : MonoBehaviour
 
             if (dist <= 0.4f)
             {
-                //Debug.Log("Target Reached");
-
                 if (foundResource)
                 {
                     grid.updateNodeWeight(currentWaypoint);
@@ -136,7 +136,7 @@ public class Unit : MonoBehaviour
                         foundResource = false;
                         home.ChangeFood(storage);
                     }
-                    FillEnergy();
+                    CheckFood();
                     returnToNest = false;
                     moving = false;
                     yield break;
@@ -149,11 +149,26 @@ public class Unit : MonoBehaviour
         }
     }
 
-    private void FillEnergy()
+    private void CheckFood()
     {
-        int missing = (baseEnergy - energy) % 10;
-        home.ChangeFood(-missing);
-        energy = baseEnergy;
+        int missing = (baseEnergy - energy) / 10;
+        if (missing > 0)
+        {
+            FillEnergy(missing);
+        }
+    }
+
+    private void FillEnergy(int missing)
+    {
+        if (home.FoodLow() && energy <= 0)
+        {
+            KillUnit();
+        }
+        else
+        {
+            int foodGained = -home.ChangeFood(-missing) * 10;
+            energy += foodGained;
+        }
     }
 
     private int GetEnergy()
@@ -161,15 +176,22 @@ public class Unit : MonoBehaviour
         return energy;
     }
 
+    private void KillUnit()
+    {
+        Destroy(this.gameObject);
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.collider.name == "Ant")
+
         {
             //Debug.Log(collision.collider.name);
-            if (!returnToNest)
+            /*if (!returnToNest)
             {
                 moving = false;
-            }
+            }*/
+
 
         }
 
@@ -179,11 +201,16 @@ public class Unit : MonoBehaviour
 
 
             grid.updateNodeWeight(transform.position);
-            Debug.Log(collision.collider.name);
+            //Debug.Log(collision.collider.name);
             foundResource = true;
             int fill = ((baseEnergy - energy) % 10);
             float gathered = collision.gameObject.GetComponent<ResourceManager>().ResourceGather(-(fill + storageLimit));
-            energy = baseEnergy;
+            energy += (int)gathered;
+            if(energy > baseEnergy)
+            {
+                energy = baseEnergy;
+            }
+
             storage = ((int)gathered-fill);
 
             ReturnToNest();
