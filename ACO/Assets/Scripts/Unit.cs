@@ -8,6 +8,8 @@ public class Unit : MonoBehaviour
     public Nest home;
     public Grid grid;
     private BoxCollider agentCollider;
+    public GameObject workerPrefab;
+    GameObject workerPrefabClone;
     List<Vector3> traveledNodes = new List<Vector3>();
     float speed = 2.0f;
     Vector3 test = Vector3.zero, targetPos, checkPosition, currentWaypoint,homeNest;
@@ -16,7 +18,7 @@ public class Unit : MonoBehaviour
     bool returnToNest = false, moving = false, foundResource = false;
     int targetIndex, storage=0;
     public int energy;
-    int baseEnergy, storageLimit=50;
+    public int baseEnergy, storageLimit, numberOfAnts= 1, spawnCost;
 
     private void Start()
     {
@@ -24,8 +26,11 @@ public class Unit : MonoBehaviour
         targetPos = transform.position;
         StartCoroutine(UpdateMove());
         baseEnergy = GetEnergy();
+        storageLimit = baseEnergy;
         homeNest = home.GetPosition();
         Physics.IgnoreLayerCollision(13, 13);
+
+        spawnCost = baseEnergy + (numberOfAnts * numberOfAnts);
     }
 
     private void Update()
@@ -179,6 +184,19 @@ public class Unit : MonoBehaviour
     private void KillUnit()
     {
         Destroy(this.gameObject);
+        numberOfAnts--;
+    }
+
+    public void SpawnUnit()
+    {
+        if (!home.FoodLow() && spawnCost < home.food)
+        {
+            workerPrefabClone = Instantiate(workerPrefab, homeNest, Quaternion.identity) as GameObject;
+            numberOfAnts++;
+            home.ChangeFood(-spawnCost);
+        }
+        spawnCost = baseEnergy + (numberOfAnts * numberOfAnts);
+
     }
 
     private void OnCollisionEnter(Collision collision)

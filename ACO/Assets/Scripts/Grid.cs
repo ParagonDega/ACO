@@ -6,7 +6,7 @@ using System.IO;
 
 public class Grid : MonoBehaviour
 {
-    const float minGridUpdateTime = 120.0f;
+    const float minGridUpdateTime = 60.0f;
     public Camera gamecamera;
     public Transform player;
     public LayerMask unwalkableMask, foodMask;
@@ -228,6 +228,7 @@ public class Grid : MonoBehaviour
             spawnNode = NodeFromWorldPoint(hitInfo.point);//get spawn location
             spawnPosition = spawnNode.worldPos;
             Debug.Log("Hit " + spawnNode.gridX + " " + spawnNode.gridY);
+            Debug.Log(hitInfo.transform.name);
 
         }
         if (spawnNode.food != null)//Check if food already spawned
@@ -237,20 +238,13 @@ public class Grid : MonoBehaviour
         }
         else//Spawn new food item
         {
-            if (spawnPosition != Vector3.zero)
+            if (spawnPosition != Vector3.zero && hitInfo.transform.name != "SpawnButton")
             {
                 GameObject foodToSpawn = SpawnManager.spawnManager.GetFoodToSpawn();
                 float dist = Vector3.Distance(spawnPosition, nest.GetPosition());
                 if (dist > 4.0f) {
                     spawnNode.food = (GameObject)Instantiate(foodToSpawn, spawnPosition, Quaternion.identity);
                 }
-                    //List<Node> neighbours = GetNeighbours(spawnNode);
-                //float foodPhere=spawnNode.GetFoodPheremone();
-                //for (int i = 0; i < neighbours.Count; i++)
-                //{
-                //    neighbours[i].pheremone = foodPhere;                                                             //Set all neighbour pheremones high to simulate food awareness
-                //}
-
             }
         }
 
