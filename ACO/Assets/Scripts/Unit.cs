@@ -183,8 +183,9 @@ public class Unit : MonoBehaviour
 
     private void KillUnit()
     {
-        Destroy(this.gameObject);
         numberOfAnts--;
+        StopAllCoroutines();
+        Destroy(this.gameObject);
     }
 
     public void SpawnUnit()
