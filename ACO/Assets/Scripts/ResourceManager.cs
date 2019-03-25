@@ -5,7 +5,7 @@ using UnityEngine;
 public class ResourceManager : MonoBehaviour
 {
 
-    public enum ResourceTypes { Honey}
+    public enum ResourceTypes { Honey }
     public ResourceTypes resourceTypes;
     private Node position;
     public Grid grid;

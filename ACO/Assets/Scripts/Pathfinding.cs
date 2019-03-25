@@ -6,16 +6,16 @@ using UnityEngine;
 public class Pathfinding : MonoBehaviour
 {
     Grid worldGrid;
-    ForwardMovementManager forwardMovementManager;
-    BackwardsPathfindingManager pathRequestManager;
+    ForwardMovementManager fMM;
+    BackwardsPathfindingManager pRM;
 
     int maskSize = 5;
 
     void Awake()
     {
         worldGrid = GetComponent<Grid>();
-        forwardMovementManager = GetComponent<ForwardMovementManager>();
-        pathRequestManager = GetComponent<BackwardsPathfindingManager>();
+        fMM = GetComponent<ForwardMovementManager>();
+        pRM = GetComponent<BackwardsPathfindingManager>();
     }
 
     public void RequestMove(Vector3 currentPos, Vector3 oldPos)
@@ -36,7 +36,7 @@ public class Pathfinding : MonoBehaviour
         //Select neighbour
         targetNode = worldGrid.NextNode(currentNode, lastNode, 1);
         yield return null;
-        forwardMovementManager.FinishedProcessingMove(targetNode.worldPos, true);
+        fMM.FinishedProcessingMove(targetNode.worldPos, true);
     }
 
     IEnumerator RetracePath(Vector3[] path)
@@ -53,7 +53,7 @@ public class Pathfinding : MonoBehaviour
         Array.Reverse(returnPath);
         pathSucces = true;
         yield return null;
-        pathRequestManager.FinishedProcessingPath(returnPath,pathSucces);
+        pRM.FinishedProcessingPath(returnPath,pathSucces);
 
     }
 

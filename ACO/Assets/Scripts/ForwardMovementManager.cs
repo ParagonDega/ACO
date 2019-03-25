@@ -6,13 +6,13 @@ using UnityEngine;
 public class ForwardMovementManager : MonoBehaviour
 {
 
-    Queue<MoveRequest> moveRequestQueue = new Queue<MoveRequest>();
-    MoveRequest currentMoveRequest;
+    private Queue<MoveRequest> moveRequestQueue = new Queue<MoveRequest>();
+    private MoveRequest currentMoveRequest;
 
     static ForwardMovementManager instance;
-    Pathfinding pathfinding;
+    private Pathfinding pathfinding;
 
-    bool isProcessingPath;
+    private bool isProcessingPath;
 
     private void Awake()
     {
@@ -27,7 +27,7 @@ public class ForwardMovementManager : MonoBehaviour
         instance.TryProcessNext();
     }
 
-    void TryProcessNext()
+    private void TryProcessNext()
     {
         if (!isProcessingPath && moveRequestQueue.Count >0)
         {

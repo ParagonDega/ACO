@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UITextDisplay : MonoBehaviour
+public class UIDisplay : MonoBehaviour
 {
     public Nest nest;
     public Unit worker;
@@ -14,6 +14,20 @@ public class UITextDisplay : MonoBehaviour
     {
         energyText.text = "Energy: " + nest.food;
         unitText.text = "Workers: " + worker.numberOfAnts;
-        spawnButtonText.text = "Spawn Worker: "+ worker.spawnCost +" energy";
+        spawnButtonText.text = "Spawn Worker: " + worker.spawnCost + " energy";
     }
+
+    public void HandleClickQuit()
+    {
+        //Gather nest data here 
+        Debug.Log("Quit");
+        StartCoroutine("Quit");
+    }
+
+    IEnumerator Quit()
+    {
+        yield return new WaitForSeconds(10);
+        Application.Quit();
+    }
+
 }

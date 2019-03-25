@@ -6,7 +6,7 @@ using System.IO;
 
 public class Grid : MonoBehaviour
 {
-    const float minGridUpdateTime = 60.0f;
+    private const float minGridUpdateTime = 60.0f;
     public Camera gamecamera;
     public Transform player;
     public LayerMask unwalkableMask, foodMask;
@@ -15,14 +15,14 @@ public class Grid : MonoBehaviour
     Node[,] grid;
     public Nest nest;
 
-    float nodeDiameter;
+    private float nodeDiameter;
     int gridSizeX, gridSizeY;
 
-    float randomLimit= 1.0f;
+    private float randomLimit = 1.0f;
     //private float offset = 1.2f;
     string path, content;
-    bool textStart = false;
-    int run = 0;
+    private bool textStart = false;
+    private int run = 0;
 
     private void Awake()
     {
@@ -41,7 +41,7 @@ public class Grid : MonoBehaviour
 
     }
 
-    void CreateGrid()
+    private void CreateGrid()
     {
         grid = new Node[gridSizeX, gridSizeY];
         Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridSizeY / 2;
@@ -78,7 +78,7 @@ public class Grid : MonoBehaviour
     private Node CalculateProbabilities(List<Node> l)
     {
         //content = "Run: " + run + "= ";
-        Node next = l[0];
+        Node next = null;
         float pheremone = 0.0f;
         float check = 0, random = RandomNumber(randomLimit);
 
@@ -92,8 +92,8 @@ public class Grid : MonoBehaviour
         for (int i = 0; i < l.Count; i++)                                   //calculate neighbour probabilities
         {
             l[i].probability = (l[i].alpha * (1 / l[i].pheremone)) / pheremone;
-            //content += i + ": " + l[i].probability + ", ";
         }
+        
         for (int i = 0; i < l.Count; i++)
         {
             check += l[i].probability;
@@ -104,6 +104,10 @@ public class Grid : MonoBehaviour
                 run++;
                 next = l[i];
                 break;
+            }
+            if(next == null && i == l.Count - 1)
+            {
+                i = 0;
             }
         }
         return next;
@@ -216,7 +220,7 @@ public class Grid : MonoBehaviour
         return value;
     }
 
-    void OnMouseDown()
+    private void OnMouseDown()
     {
         Ray ray = gamecamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit hitInfo;
@@ -275,12 +279,12 @@ public class Grid : MonoBehaviour
 
     }
 
-    void pheremoneDispersal()
+    private void pheremoneDispersal()
     {
         Debug.Log("Updated pheremone");
         foreach(Node n in grid)
         {
-            if(n.pheremone != n.GetInitialPheremone() && n.pheremone != n.GetFoodPheremone()){
+            if(n.pheremone != n.GetInitialPheremone()){
                 n.changeWeight(0.25f);
             }
         }

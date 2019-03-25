@@ -7,12 +7,6 @@ public class SpawnButton : MonoBehaviour
 {
     public Unit worker;
 
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
     public void HandleClick()
     {
         worker.SpawnUnit();

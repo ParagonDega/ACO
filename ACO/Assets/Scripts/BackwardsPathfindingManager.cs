@@ -6,11 +6,11 @@ using UnityEngine;
 public class BackwardsPathfindingManager : MonoBehaviour //Backwards pathfinding
 {
 
-    Queue<PathRequest> pathRequestQueue = new Queue<PathRequest>();
-    PathRequest currentPathRequest;
+    private Queue<PathRequest> pathRequestQueue = new Queue<PathRequest>();
+    private PathRequest currentPathRequest;
     static BackwardsPathfindingManager instance;
-    Pathfinding pathfinding;
-    bool isProcessingPath;
+    private  Pathfinding pathfinding;
+    private bool isProcessingPath;
 
     void Awake()
     {
@@ -25,7 +25,7 @@ public class BackwardsPathfindingManager : MonoBehaviour //Backwards pathfinding
         instance.TryProcessNext();
     }
 
-    void TryProcessNext()
+    private void TryProcessNext()
     {
         if (!isProcessingPath && pathRequestQueue.Count > 0)
         {
