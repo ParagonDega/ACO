@@ -377,7 +377,7 @@ MonoBehaviour:
   home: {fileID: 928557076}
   grid: {fileID: 288218304}
   workerPrefab: {fileID: 261968980}
-  energy: 100
+  energy: 50
   baseEnergy: 0
   storageLimit: 50
   numberOfAnts: 1
@@ -2785,5 +2785,9 @@ PrefabInstance:
       propertyPath: grid
       value: 
       objectReference: {fileID: 288218304}
+    - target: {fileID: 261968985, guid: e00ae55c48fcbd2438964e111dd5e7a0, type: 3}
+      propertyPath: energy
+      value: 50
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e00ae55c48fcbd2438964e111dd5e7a0, type: 3}

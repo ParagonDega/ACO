@@ -108,7 +108,11 @@ MonoBehaviour:
   home: {fileID: 0}
   grid: {fileID: 0}
   workerPrefab: {fileID: 5972463436770612514}
-  energy: 100
+  energy: 50
+  baseEnergy: 0
+  storageLimit: 0
+  numberOfAnts: 1
+  spawnCost: 0
 --- !u!54 &5972463436770612515
 Rigidbody:
   m_ObjectHideFlags: 0
