@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public class Unit : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class Unit : MonoBehaviour
     GameObject workerPrefabClone;
     List<Vector3> traveledNodes = new List<Vector3>();
     float speed = 2.0f;
+    int maxDistance = 0;
     Vector3 test = Vector3.zero, targetPos, checkPosition, currentWaypoint,homeNest;
     Vector3[] path;
     const float minPathUpdateTime = .2f;
@@ -19,6 +21,10 @@ public class Unit : MonoBehaviour
     int targetIndex, storage=0;
     public int energy;
     public int baseEnergy, storageLimit, numberOfAnts= 1, spawnCost;
+
+    string filePath, content;
+    private bool textStart = false;
+
 
     private void Start()
     {
@@ -31,11 +37,19 @@ public class Unit : MonoBehaviour
         Physics.IgnoreLayerCollision(13, 13);
 
         spawnCost = baseEnergy + (numberOfAnts * numberOfAnts);
+
+        filePath = Application.dataPath + "/distancelog.txt";
+
+        if (!File.Exists(filePath))
+        {
+            File.WriteAllText(filePath, "");
+        }
+
     }
 
     private void Update()
     {
-        if(traveledNodes.Count >= (baseEnergy/2) && !returnToNest)
+        if (traveledNodes.Count >= (baseEnergy/2) && !returnToNest)
         {
             ReturnToNest();
         }else if (energy <= 2 && !returnToNest)
@@ -83,6 +97,10 @@ public class Unit : MonoBehaviour
                 moving = false;
             }
             float nestDist = Vector3.Distance(transform.position, homeNest);
+            if (nestDist > maxDistance)
+            {
+                maxDistance = (int)nestDist;
+            }
             if (nestDist <= 1.0f)
             {
                 traveledNodes.Clear();
@@ -98,6 +116,11 @@ public class Unit : MonoBehaviour
 
     private void ReturnToNest()                                     //Backwards pathfinding manager call
     {
+        content = maxDistance + ", ";
+        File.AppendAllText(filePath, content);
+        content = "";
+        maxDistance = 0;
+
         StopCoroutine("UnitSearch");
         moving = false;
         targetIndex = 0;

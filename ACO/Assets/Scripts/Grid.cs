@@ -22,7 +22,6 @@ public class Grid : MonoBehaviour
     //private float offset = 1.2f;
     string path, content;
     private bool textStart = false;
-    private int run = 0;
 
     private void Awake()
     {
@@ -32,12 +31,12 @@ public class Grid : MonoBehaviour
         CreateGrid();
         StartCoroutine(UpdateGrid());
 
-        path = Application.dataPath + "/log.txt";
+        //path = Application.dataPath + "/log.txt";
 
-        if (!File.Exists(path))
-        {
-            File.WriteAllText(path, "");
-        }
+        //if (!File.Exists(path))
+        //{
+        //    File.WriteAllText(path, "");
+        //}
 
     }
 
@@ -65,8 +64,9 @@ public class Grid : MonoBehaviour
 
         //if (!textStart)
         //{
-        //    content = "Settings: pheremoneInit: " + n.GetInitialPheremone() + ", foodInit:" + n.GetFoodPheremone() + ", alpha:" + n.alpha + ", randomLimit:" + randomLimit + "\n";
+        //    content = "\nRand: " + randomLimit + " ";
         //    File.AppendAllText(path, content);
+        //    content = "";
         //    textStart = true;
         //}
 
@@ -77,7 +77,6 @@ public class Grid : MonoBehaviour
 
     private Node CalculateProbabilities(List<Node> l)
     {
-        //content = "Run: " + run + "= ";
         Node next = null;
         float pheremone = 0.0f;
         float check = 0, random = RandomNumber(randomLimit);
@@ -86,8 +85,6 @@ public class Grid : MonoBehaviour
         {
             pheremone += l[i].alpha * (1 / l[i].pheremone);                 //Sets total pheremone
         }
-
-        //content += random + ", " + pheremone + ", ";
 
         for (int i = 0; i < l.Count; i++)                                   //calculate neighbour probabilities
         {
@@ -99,9 +96,10 @@ public class Grid : MonoBehaviour
             check += l[i].probability;
             if (check >= random)
             {
-                //content += "Next: " + i + "\n";
+                //content += i + ", ";
                 //File.AppendAllText(path, content);
-                run++;
+                //content = "";
+                //run++;
                 next = l[i];
                 break;
             }

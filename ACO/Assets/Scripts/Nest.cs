@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Nest : MonoBehaviour
 {
-    private const int initFood = 1000;
+    private const int initFood = 100000;
     public int food;
     const float minFoodUpdateTime = 10.0f;
 
